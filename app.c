@@ -131,6 +131,7 @@ int main()
     float tax = 0.0;
     float total = 0.0;
     int userChoice;
+    char addMore;
 
     printf("1. Login\n");
     printf("2. Register\n");
@@ -158,17 +159,25 @@ int main()
         return 1;
     }
 
-    displayMenu();
-    printf("Enter your choice: ");
-    scanf("%d", &choice);
-    printf("Enter quantity: ");
-    scanf("%d", &quantity);
-
-    subtotal = calculateSubtotal(choice, quantity);
-    if (subtotal == -1)
+    do
     {
-        return 1;
-    }
+        displayMenu();
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+        printf("Enter quantity: ");
+        scanf("%d", &quantity);
+
+        float itemSubtotal = calculateSubtotal(choice, quantity);
+        if (itemSubtotal == -1)
+        {
+            return 1;
+        }
+
+        subtotal += itemSubtotal;
+
+        printf("Do you want to add more items to your order? (y/n): ");
+        scanf(" %c", &addMore);
+    } while (addMore == 'y' || addMore == 'Y');
 
     printf("Subtotal: $%.2f\n", subtotal);
 
