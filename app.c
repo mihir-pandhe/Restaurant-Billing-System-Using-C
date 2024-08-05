@@ -3,9 +3,13 @@
 void displayMenu()
 {
     printf("Restaurant Menu\n");
-    printf("1. Pizza - $10\n");
-    printf("2. Burger - $7\n");
-    printf("3. Pasta - $8\n");
+    printf("Starters:\n");
+    printf("1. Salad - $5\n");
+    printf("Main Course:\n");
+    printf("2. Pizza - $10\n");
+    printf("3. Burger - $7\n");
+    printf("Desserts:\n");
+    printf("4. Ice Cream - $4\n");
 }
 
 int main()
@@ -13,6 +17,7 @@ int main()
     int choice;
     int quantity;
     float total = 0.0;
+    float subtotal = 0.0;
 
     displayMenu();
     printf("Enter your choice: ");
@@ -23,19 +28,24 @@ int main()
     switch (choice)
     {
     case 1:
-        total = 10 * quantity;
+        subtotal = 5 * quantity;
         break;
     case 2:
-        total = 7 * quantity;
+        subtotal = 10 * quantity;
         break;
     case 3:
-        total = 8 * quantity;
+        subtotal = 7 * quantity;
+        break;
+    case 4:
+        subtotal = 4 * quantity;
         break;
     default:
         printf("Invalid choice.\n");
         return 1;
     }
 
+    total = subtotal;
+    printf("Subtotal: $%.2f\n", subtotal);
     printf("Total Bill: $%.2f\n", total);
     return 0;
 }
