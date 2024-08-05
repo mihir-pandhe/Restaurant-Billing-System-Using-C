@@ -65,11 +65,12 @@ void saveMenuToFile()
 
 void displayMenu()
 {
-    printf("Restaurant Menu\n");
+    printf("\nRestaurant Menu\n");
     for (int i = 0; i < menuItemCount; i++)
     {
         printf("%d. %s - $%.2f\n", i + 1, menu[i].name, menu[i].price);
     }
+    printf("\n");
 }
 
 float calculateSubtotal(int choice, int quantity)
@@ -244,7 +245,7 @@ void placeOrder()
         scanf(" %c", &addMore);
     } while (addMore == 'y' || addMore == 'Y');
 
-    printf("Subtotal: $%.2f\n", subtotal);
+    printf("\nSubtotal: $%.2f\n", subtotal);
 
     discount = applyDiscount(subtotal);
     printf("Subtotal after discount: $%.2f\n", discount);
@@ -269,47 +270,22 @@ void placeOrder()
     }
 }
 
-int main()
+void showMainMenu()
 {
-    loadMenuFromFile();
-
     int userChoice;
-    printf("1. Login\n");
-    printf("2. Register\n");
-    printf("Enter choice: ");
-    if (scanf("%d", &userChoice) != 1 || (userChoice != 1 && userChoice != 2))
-    {
-        printf("Invalid choice.\n");
-        return 1;
-    }
-
-    if (userChoice == 1)
-    {
-        if (!authenticateUser())
-        {
-            return 1;
-        }
-    }
-    else if (userChoice == 2)
-    {
-        registerUser();
-        if (!authenticateUser())
-        {
-            return 1;
-        }
-    }
-
     do
     {
+        printf("\nMain Menu\n");
         printf("1. Place an Order\n");
         printf("2. Add Menu Item\n");
         printf("3. Update Menu Item\n");
         printf("4. Delete Menu Item\n");
+        printf("5. Exit\n");
         printf("Enter your choice: ");
         if (scanf("%d", &userChoice) != 1)
         {
             printf("Invalid choice.\n");
-            return 1;
+            exit(1);
         }
 
         switch (userChoice)
@@ -326,13 +302,52 @@ int main()
         case 4:
             deleteMenuItem();
             break;
+        case 5:
+            printf("Exiting the program. Goodbye!\n");
+            exit(0);
+            break;
         default:
             printf("Invalid choice.\n");
             break;
         }
+    } while (userChoice != 5);
+}
 
-        printf("Do you want to perform another action? (1 for Yes, 0 for No): ");
-    } while (scanf("%d", &userChoice) == 1 && userChoice == 1);
+void displayLoginMenu()
+{
+    int userChoice;
+    printf("1. Login\n");
+    printf("2. Register\n");
+    printf("Enter choice: ");
+    if (scanf("%d", &userChoice) != 1 || (userChoice != 1 && userChoice != 2))
+    {
+        printf("Invalid choice.\n");
+        exit(1);
+    }
 
+    if (userChoice == 1)
+    {
+        if (!authenticateUser())
+        {
+            printf("Failed to login.\n");
+            exit(1);
+        }
+    }
+    else if (userChoice == 2)
+    {
+        registerUser();
+        if (!authenticateUser())
+        {
+            printf("Failed to login after registration.\n");
+            exit(1);
+        }
+    }
+}
+
+int main()
+{
+    loadMenuFromFile();
+    displayLoginMenu();
+    showMainMenu();
     return 0;
 }
