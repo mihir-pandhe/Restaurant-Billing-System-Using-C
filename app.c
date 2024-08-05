@@ -2,7 +2,7 @@
 
 void displayMenu()
 {
-    printf("Restaurant Menu\n");
+    printf(" My Restaurant Menu\n");
     printf("Starters:\n");
     printf("1. Salad - $5\n");
     printf("Main Course:\n");
