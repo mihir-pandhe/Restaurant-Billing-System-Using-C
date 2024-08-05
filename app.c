@@ -31,6 +31,38 @@ int menuItemCount = 0;
 int userCount = 1;
 User *loggedInUser = NULL;
 
+void loadMenuFromFile()
+{
+    FILE *file = fopen(MENU_FILE, "r");
+    if (file == NULL)
+    {
+        perror("Error opening menu file for reading");
+        return;
+    }
+    fscanf(file, "%d", &menuItemCount);
+    for (int i = 0; i < menuItemCount; i++)
+    {
+        fscanf(file, "%s %f", menu[i].name, &menu[i].price);
+    }
+    fclose(file);
+}
+
+void saveMenuToFile()
+{
+    FILE *file = fopen(MENU_FILE, "w");
+    if (file == NULL)
+    {
+        perror("Error opening menu file for writing");
+        return;
+    }
+    fprintf(file, "%d\n", menuItemCount);
+    for (int i = 0; i < menuItemCount; i++)
+    {
+        fprintf(file, "%s %.2f\n", menu[i].name, menu[i].price);
+    }
+    fclose(file);
+}
+
 void displayMenu()
 {
     printf("Restaurant Menu\n");
@@ -116,38 +148,6 @@ void displayOrderHistory()
     }
 }
 
-void saveMenuToFile()
-{
-    FILE *file = fopen(MENU_FILE, "w");
-    if (file == NULL)
-    {
-        printf("Error opening file for writing.\n");
-        return;
-    }
-    fprintf(file, "%d\n", menuItemCount);
-    for (int i = 0; i < menuItemCount; i++)
-    {
-        fprintf(file, "%s %f\n", menu[i].name, menu[i].price);
-    }
-    fclose(file);
-}
-
-void loadMenuFromFile()
-{
-    FILE *file = fopen(MENU_FILE, "r");
-    if (file == NULL)
-    {
-        printf("Error opening file for reading.\n");
-        return;
-    }
-    fscanf(file, "%d", &menuItemCount);
-    for (int i = 0; i < menuItemCount; i++)
-    {
-        fscanf(file, "%s %f", menu[i].name, &menu[i].price);
-    }
-    fclose(file);
-}
-
 void addMenuItem()
 {
     if (menuItemCount >= MAX_MENU_ITEMS)
@@ -158,7 +158,11 @@ void addMenuItem()
     printf("Enter name of the new item: ");
     scanf("%s", menu[menuItemCount].name);
     printf("Enter price of the new item: ");
-    scanf("%f", &menu[menuItemCount].price);
+    if (scanf("%f", &menu[menuItemCount].price) != 1 || menu[menuItemCount].price < 0)
+    {
+        printf("Invalid price.\n");
+        return;
+    }
     menuItemCount++;
     saveMenuToFile();
 }
@@ -168,8 +172,7 @@ void updateMenuItem()
     int choice;
     displayMenu();
     printf("Enter the number of the item to update: ");
-    scanf("%d", &choice);
-    if (choice < 1 || choice > menuItemCount)
+    if (scanf("%d", &choice) != 1 || choice < 1 || choice > menuItemCount)
     {
         printf("Invalid choice.\n");
         return;
@@ -177,7 +180,11 @@ void updateMenuItem()
     printf("Enter new name of the item: ");
     scanf("%s", menu[choice - 1].name);
     printf("Enter new price of the item: ");
-    scanf("%f", &menu[choice - 1].price);
+    if (scanf("%f", &menu[choice - 1].price) != 1 || menu[choice - 1].price < 0)
+    {
+        printf("Invalid price.\n");
+        return;
+    }
     saveMenuToFile();
 }
 
@@ -186,8 +193,7 @@ void deleteMenuItem()
     int choice;
     displayMenu();
     printf("Enter the number of the item to delete: ");
-    scanf("%d", &choice);
-    if (choice < 1 || choice > menuItemCount)
+    if (scanf("%d", &choice) != 1 || choice < 1 || choice > menuItemCount)
     {
         printf("Invalid choice.\n");
         return;
@@ -200,7 +206,7 @@ void deleteMenuItem()
     saveMenuToFile();
 }
 
-int main()
+void placeOrder()
 {
     int choice;
     int quantity;
@@ -208,15 +214,74 @@ int main()
     float discount = 0.0;
     float tax = 0.0;
     float total = 0.0;
-    int userChoice;
     char addMore;
 
+    do
+    {
+        displayMenu();
+        printf("Enter your choice: ");
+        if (scanf("%d", &choice) != 1 || choice < 1 || choice > menuItemCount)
+        {
+            printf("Invalid choice.\n");
+            return;
+        }
+        printf("Enter quantity: ");
+        if (scanf("%d", &quantity) != 1 || quantity < 1)
+        {
+            printf("Invalid quantity.\n");
+            return;
+        }
+
+        float itemSubtotal = calculateSubtotal(choice, quantity);
+        if (itemSubtotal == -1)
+        {
+            return;
+        }
+
+        subtotal += itemSubtotal;
+
+        printf("Do you want to add more items to your order? (y/n): ");
+        scanf(" %c", &addMore);
+    } while (addMore == 'y' || addMore == 'Y');
+
+    printf("Subtotal: $%.2f\n", subtotal);
+
+    discount = applyDiscount(subtotal);
+    printf("Subtotal after discount: $%.2f\n", discount);
+
+    tax = calculateTax(discount);
+    printf("Tax: $%.2f\n", tax);
+
+    total = discount + tax;
+    printf("Total Bill: $%.2f\n", total);
+
+    if (loggedInUser != NULL && loggedInUser->orderCount < MAX_ORDERS)
+    {
+        loggedInUser->orderHistory[loggedInUser->orderCount] = total;
+        loggedInUser->orderCount++;
+    }
+
+    printf("Do you want to view your order history? (1 for Yes, 0 for No): ");
+    int userChoice;
+    if (scanf("%d", &userChoice) == 1 && userChoice == 1)
+    {
+        displayOrderHistory();
+    }
+}
+
+int main()
+{
     loadMenuFromFile();
 
+    int userChoice;
     printf("1. Login\n");
     printf("2. Register\n");
     printf("Enter choice: ");
-    scanf("%d", &userChoice);
+    if (scanf("%d", &userChoice) != 1 || (userChoice != 1 && userChoice != 2))
+    {
+        printf("Invalid choice.\n");
+        return 1;
+    }
 
     if (userChoice == 1)
     {
@@ -233,11 +298,6 @@ int main()
             return 1;
         }
     }
-    else
-    {
-        printf("Invalid choice.\n");
-        return 1;
-    }
 
     do
     {
@@ -246,54 +306,16 @@ int main()
         printf("3. Update Menu Item\n");
         printf("4. Delete Menu Item\n");
         printf("Enter your choice: ");
-        scanf("%d", &userChoice);
+        if (scanf("%d", &userChoice) != 1)
+        {
+            printf("Invalid choice.\n");
+            return 1;
+        }
 
         switch (userChoice)
         {
         case 1:
-            do
-            {
-                displayMenu();
-                printf("Enter your choice: ");
-                scanf("%d", &choice);
-                printf("Enter quantity: ");
-                scanf("%d", &quantity);
-
-                float itemSubtotal = calculateSubtotal(choice, quantity);
-                if (itemSubtotal == -1)
-                {
-                    return 1;
-                }
-
-                subtotal += itemSubtotal;
-
-                printf("Do you want to add more items to your order? (y/n): ");
-                scanf(" %c", &addMore);
-            } while (addMore == 'y' || addMore == 'Y');
-
-            printf("Subtotal: $%.2f\n", subtotal);
-
-            discount = applyDiscount(subtotal);
-            printf("Subtotal after discount: $%.2f\n", discount);
-
-            tax = calculateTax(discount);
-            printf("Tax: $%.2f\n", tax);
-
-            total = discount + tax;
-            printf("Total Bill: $%.2f\n", total);
-
-            if (loggedInUser != NULL && loggedInUser->orderCount < MAX_ORDERS)
-            {
-                loggedInUser->orderHistory[loggedInUser->orderCount] = total;
-                loggedInUser->orderCount++;
-            }
-
-            printf("Do you want to view your order history? (1 for Yes, 0 for No): ");
-            scanf("%d", &userChoice);
-            if (userChoice == 1)
-            {
-                displayOrderHistory();
-            }
+            placeOrder();
             break;
         case 2:
             addMenuItem();
@@ -310,8 +332,7 @@ int main()
         }
 
         printf("Do you want to perform another action? (1 for Yes, 0 for No): ");
-        scanf("%d", &userChoice);
-    } while (userChoice == 1);
+    } while (scanf("%d", &userChoice) == 1 && userChoice == 1);
 
     return 0;
 }
